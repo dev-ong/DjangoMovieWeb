@@ -1,0 +1,107 @@
+{% extends 'base.html' %}
+{% load bootstrap4 %}
+
+{% block content %}
+  {% if video_path %}
+    <div id="area">
+      <iframe
+        id="video"
+        src="https://www.youtube.com/embed/{{video_path}}?autoplay=1"
+        title="YouTube video player"
+        frameborder="0"
+        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+        allowfullscreen
+      ></iframe>
+    </div>
+  {% endif %}
+  <div id="movieCard" class="container">
+    <div class="row">
+      <section class="col-6">
+        <img src="https://image.tmdb.org/t/p/w500{{movie.poster_path}}" alt="poster_img" class="img-fluid">
+      </section>
+      <section class="col-6">
+        <h1>{{ movie.title }}</h1>
+        <p>
+          {{ movie.release_date | date:'Y/m/d' }}
+          /
+          {% for genre in movie.genres.all %}
+            {{genre.name}}
+          {% endfor %}
+        </p>
+        <p>회원 점수 : {{ movie.vote_average }} / 인기도 : {{ movie.popularity }}</p>
+        <h2>개요</h2>
+        <p>{{ movie.overview }}</p>
+      </section>
+    </div>
+  </div>
+  <div class="container border-0 bg-white mb-3 py-5" style="border-radius: 3rem;">
+    <div class="row bg-secondary justify-content-between p-2 fw-bold">
+      <div class="col text-start">
+        한 줄 평 {{ ranks | length }}
+      </div>
+      <div class="col text-end">
+        평점 {{ averatge_ranks | floatformat:2 }}
+      </div>
+    </div>
+    {% if not user_rank %}
+    <div class="row mx-1 my-2" >
+      <form action="{% url 'movies:create_rank' movie.pk %}" method="POST">
+        {% csrf_token %}
+        {% bootstrap_form rank_form %}
+        <br>
+        <input type="submit" class="btn btn-dark" value="등록">
+      </form>
+    </div>
+    {% endif %}
+      {% for rank in ranks %}
+        <div class="row my-3 text-start align-items-center" style="font-size: 14px;">
+          <a
+            href="{% url 'accounts:profile' rank.user %}"
+            class="col-2 text-decoration-none text-dark fw-bold"
+          >
+            {{ rank.user }}
+          </a>
+          {% if request.user == rank.user %}
+            <div class="col-6">
+              {{ rank.content }}
+            </div>
+            <div class="col-1">
+              <form action="{% url 'movies:delete_rank' movie.pk rank.pk %}" method="POST">
+                {% csrf_token %}
+                <input type="submit" class="btn btn-link p-0 text-decoration-none text-danger" value="삭제">
+              </form>
+            </div>
+          {% else %}
+            <div class="col-7">
+              {{ rank.content }}
+            </div>
+          {% endif %}
+          <div class="col-2 text-warning">
+            {{ rank.get_rank_display }}
+          </div>
+        </div><hr>
+      {% endfor %}
+  <style>
+    #movieCard {
+      border: solid;
+      border-radius: 1rem;
+      background-color: black;
+      color: white;
+      padding: 1rem;
+      margin-top: 1rem;
+      margin-bottom: 2rem;
+    }
+
+    #area {
+      position: relative;
+      width: 100%;
+      padding-bottom: 56.25%;
+    }
+
+    #video {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+    }
+  </style>
+{% endblock content %}

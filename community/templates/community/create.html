@@ -1,0 +1,12 @@
+{% extends 'base.html' %}
+{% load bootstrap4 %}
+
+{% block content %}
+  <h1 class="text-center fw-bold text-white">CREATE</h1>
+  <form  class="text-white" action="" method="POST">
+    {% csrf_token %}
+    {% bootstrap_form form %}
+    <br>
+    <input class="btn btn-light" type="submit" value="글 작성">
+  </form>
+{% endblock %}

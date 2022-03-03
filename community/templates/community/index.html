@@ -1,0 +1,26 @@
+{% extends 'base.html' %}
+
+{% block content %}
+  <h1 class="text-center fw-bold text-white mb-3">REVIEWS</h1>
+  <div class="container border bg-white" style="border-radius: 2rem; height: 40rem;">
+    <div class="row text-center fw-bold p-1" style="font-size: 13px;">
+      <div class="col-2 col-md-1">번호</div>
+      <div class="col-3 col-md-5 col-lg-7">제목</div>
+      <div class="col-2 col-md-2 col-lg-1">작성자</div>
+      <div class="col-3 col-md-2">작성시간</div>
+      <div class="col-2 col-md-2 col-lg-1">좋아요</div>
+    </div>
+    {% for review in reviews %}
+      <div class="row text-center border-top p-1" style="font-size: 14px;">
+        <div class="col-2 col-md-1">{{ review.pk }}</div>
+        <div class="col-3 col-md-5 col-lg-7 text-start"><a href="{% url 'community:detail' review.pk %}" class="text-dark text-decoration-none fw-bold">{{ review.title }}</a></div>
+        <div class="col-2 col-md-2 col-lg-1"><a href="{% url 'accounts:profile' review.user.username %}" class="text-dark text-decoration-none fw-bold">{{ review.user }}</a></div>
+        {% if review.created_string %}
+          <div class="col-3 col-md-2">{{ review.created_string }}</div>
+        {% else %}
+          <div class="col-3 col-md-2">{{ review.created_at | date:'y.m.d' }}</div>
+        {% endif %}
+        <div class="col-2 col-md-2 col-lg-1">{{ review.like_users.all|length }}</div>
+      </div>
+    {% endfor %}
+{% endblock %}

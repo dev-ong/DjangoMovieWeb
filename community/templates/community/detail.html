@@ -1,0 +1,146 @@
+{% extends 'base.html' %}
+{% load bootstrap4 %}
+
+{% block content %}
+  <div class="container border-0 bg-white mb-3" style="border-radius: 2rem;">
+    <div class="row my-3 fs-1 fw-bold p-3">{{ review.title }}</div>
+    <div class="row bg-light px-1">
+      <div class="col my-auto">
+        {% if request.user == review.user %}
+          <a href="{% url 'accounts:profile' review.user.username %}" class="text-dark text-decoration-none fw-bold">
+            {{ review.user }} (나)
+          </a>
+        {% else %}
+          <a href="{% url 'accounts:profile' review.user.username %}" class="text-dark text-decoration-none fw-bold">
+            {{ review.user }}
+          </a>
+        {% endif %}
+      </div>
+      <div class="col my-auto">{{ review.movie }}</div>
+      <div class="col my-auto text-end" style="font-size: 12px;">{{ review.created_at | date:'Y.m.d H:i'}}</div>
+      <div class="col-2">
+        <form id="like-form" data-review-id="{{ review.pk }}">
+          {% csrf_token %}
+          {% if user in review.like_users.all %}
+            <button class="btn btn-link text-danger">
+              <i class="fas fa-heart">
+                <span id="like-cnt" class="inline">{{ review.like_users.all | length }}
+              </i>
+            </span></button>
+          {% else %}
+            <button class="btn btn-link text-secondary">
+              <i class="fas fa-heart">
+                <span id="like-cnt" class="inline">{{ review.like_users.all | length }}</span>
+              </i>
+            </button>
+          {% endif %}
+          
+        </form>
+      </div>
+    </div>
+    <div class="row mx-2 my-5" style="width:100%">{{ review.content }}</div>
+    {% if user == review.user %}
+      <div class="row justify-content-between my-3">
+        <div class="col-2">
+          <a class="btn btn-primary w-100" href="{% url 'community:update' review.pk %}">수정</a>
+        </div>
+        <div class="col-2">
+          <form action="{% url 'community:delete' review.pk %}" method="POST">
+            {% csrf_token %}
+            <input class="btn btn-danger w-100 px-auto"type="submit" value="삭제">
+          </form>
+        </div>
+      </div>
+    {% endif %}
+    <div class="row p-3 bg-light">
+      댓글 {{ comments|length }}
+    </div>
+    <div class="row p-3">
+      <form action="{% url 'community:create_comment' review.pk%}" method="POST" class="m-1">
+        {% csrf_token %}
+        {% bootstrap_form comment_form %}
+        <input class="btn btn-dark my-3" type="submit" value="작성">
+      </form>
+    </div>
+    {% if comments %}
+      <div class="row justify-content-end text-center" style="font-size: 10px;">
+        <div class="col-2 col-lg-1">작성</div>
+        <div class="col-2 col-lg-1">수정</div>
+      </div>
+    {% endif %}
+    {% for comment in comments %}
+      <hr><div class="row text-center align-items-center" style="font-size: 13px;">
+        <a
+          href="{% url 'accounts:profile' comment.user.username %}"
+          class="col-3 text-dark text-decoration-none text-start fw-bold my-auto"
+        >
+          {% if request.user == comment.user %}
+            {{ comment.user }} (나)
+          {% elif review.user == comment.user %}
+            {{ comment.user }} (글쓴이)
+          {% else %}
+            {{ comment.user }}</a>
+          {% endif %}
+        </a>
+        {% if user == comment.user %}
+          <div class="col-3 col-md-4 col-lg-6 my-auto text-start">
+            <a 
+              href="{% url 'community:update_comment' review.pk comment.pk %}"
+              class="text-dark text-decoration-none fw-bold"
+            >
+              {{ comment.content }}
+            </a>
+          </div>
+          <div class="col-2 col-md-1">
+            <form action="{% url 'community:delete_comment' review.pk comment.pk %}" method="POST" class="d-inline">
+              {% csrf_token %}
+              <input type="submit" class="btn btn-link w-100 p-0 text-decoration-none text-danger" style="font-size: 13px;" value="삭제">
+            </form>
+          </div>
+        {% else %}
+          <div class="col-5 col-lg-7 text-start">{{ comment.content }}</div>
+        {% endif %}
+        <div class="col-2 col-lg-1 my-auto text-center">
+        {% if comment.created_string %}
+          {{ comment.created_string }}
+        {% else %}
+          {{ comment.created_at | date:'y.m.d' }}
+        {% endif %}
+        </div>
+        <div class="col-2 col-lg-1 my-auto text-center">
+        {% if comment.updated_string %}
+          {{ comment.updated_string }}
+        {% else %}
+          {{ comment.updated_at | date:'y.m.d' }}
+        {% endif %}
+        </div>
+      </div>
+    {% endfor %}
+    <hr>
+  </div>
+  <script>
+    const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]').value
+    const likeForm = document.querySelector('#like-form')
+
+    likeForm.addEventListener('submit', event => {
+      const reviewId = event.target.dataset.reviewId
+      event.preventDefault()
+      axios({
+        method: 'post',
+        url: `/community/${reviewId}/like/`,
+        headers: {'X-CSRFToken': csrftoken},
+      })
+      .then(response => {
+        const {isLiked, likes} = response.data
+        const likeBtn = document.querySelector("#like-form > button")
+        const likeCnt = document.querySelector("#like-cnt")
+        if (isLiked) {
+          likeBtn.className = "btn btn-link text-danger"
+        } else {
+          likeBtn.className = "btn btn-link text-secondary"
+        }
+        likeCnt.innerText = `${likes}`
+      })
+    })
+  </script>
+{% endblock  %}
